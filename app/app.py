@@ -1,7 +1,13 @@
 import streamlit as st
-from pipeline.pipeline import AnimeRecommendationPipeline
 from dotenv import load_dotenv
 import time
+import sys
+import os
+
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from pipeline.pipeline import AnimeRecommendationPipeline
 
 st.set_page_config(
     page_title="GetAnime - Your Anime Discovery Companion",
