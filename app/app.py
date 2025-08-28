@@ -27,7 +27,9 @@ def build_pipeline_if_needed():
     """Build the pipeline if vector store doesn't exist"""
     try:
         # Import here to avoid issues if the module has problems
-        from src.data_loader import DataLoader
+        from src.data_loader import (
+            AnimeDataLoader,
+        )  # Fix 1: Change DataLoader to AnimeDataLoader
         from src.vector_store import VectorStoreBuilder
 
         # Check if we have the source data
@@ -42,9 +44,10 @@ def build_pipeline_if_needed():
         # Step 1: Load and process data if needed
         if not os.path.exists(processed_csv):
             st.info("📊 Processing anime data...")
-            data_loader = DataLoader(source_csv)
-            processed_data = data_loader.load_and_process()
-            processed_data.to_csv(processed_csv, index=False)
+            # Fix 2: Use correct constructor - AnimeDataLoader takes both source and processed paths
+            data_loader = AnimeDataLoader(source_csv, processed_csv)
+            # Fix 3: load_and_process() returns the path, not data, and saves automatically
+            data_loader.load_and_process()
             st.success("✅ Data processed successfully!")
 
         # Step 2: Build vector store if needed
@@ -53,7 +56,8 @@ def build_pipeline_if_needed():
             vector_builder = VectorStoreBuilder(
                 csv_path=processed_csv, persist_directory=persist_dir
             )
-            vector_store = vector_builder.build_vector_store()
+            # Fix 4: Use correct method name
+            vector_builder.build_and_save_vectorstore()
             st.success("✅ Vector database built successfully!")
 
         return True
