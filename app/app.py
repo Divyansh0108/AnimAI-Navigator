@@ -7,6 +7,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# Remove the SQLite fix since we're switching to FAISS
 # Now import everything else
 from dotenv import load_dotenv
 import time
@@ -46,15 +47,15 @@ def run_build_pipeline():
 @st.cache_resource
 def init_pipeline():
     try:
-        # Check if vector store exists
-        persist_dir = "chroma_db"
+        # Check if vector store exists - now looking for FAISS files
+        persist_dir = "faiss_db"  # Changed from chroma_db to faiss_db
         csv_path = "data/processed_anime_data.csv"
 
-        # Check if pipeline components exist
+        # Check if pipeline components exist - FAISS uses .pkl and .faiss files
         vector_store_exists = (
             os.path.exists(persist_dir)
             and os.path.isdir(persist_dir)
-            and len(os.listdir(persist_dir)) > 0
+            and any(f.endswith((".pkl", ".faiss")) for f in os.listdir(persist_dir))
         )
 
         csv_exists = os.path.exists(csv_path)
