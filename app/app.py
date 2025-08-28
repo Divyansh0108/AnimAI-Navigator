@@ -11,8 +11,8 @@ if project_root not in sys.path:
 from dotenv import load_dotenv
 import time
 
-# Import the pipeline AFTER path modification
-from pipeline.pipeline import AnimeRecommendationPipeline
+# DON'T import pipeline here - we'll import it after building
+# from pipeline.pipeline import AnimeRecommendationPipeline
 
 st.set_page_config(
     page_title="GetAnime - Your Anime Discovery Companion",
@@ -23,47 +23,23 @@ st.set_page_config(
 load_dotenv()
 
 
-def build_pipeline_if_needed():
-    """Build the pipeline if vector store doesn't exist"""
+def run_build_pipeline():
+    """Run the build_pipeline.py script directly"""
     try:
-        # Import here to avoid issues if the module has problems
-        from src.data_loader import (
-            AnimeDataLoader,
-        )  # Fix 1: Change DataLoader to AnimeDataLoader
-        from src.vector_store import VectorStoreBuilder
+        # Import and run the build pipeline main function
+        from pipeline.build_pipeline import main as build_main
 
-        # Check if we have the source data
-        source_csv = "data/anime_with_synopsis.csv"
-        processed_csv = "data/processed_anime_data.csv"
-        persist_dir = "chroma_db"
-
-        if not os.path.exists(source_csv):
-            st.error(f"❌ Source data file not found: {source_csv}")
-            return False
-
-        # Step 1: Load and process data if needed
-        if not os.path.exists(processed_csv):
-            st.info("📊 Processing anime data...")
-            # Fix 2: Use correct constructor - AnimeDataLoader takes both source and processed paths
-            data_loader = AnimeDataLoader(source_csv, processed_csv)
-            # Fix 3: load_and_process() returns the path, not data, and saves automatically
-            data_loader.load_and_process()
-            st.success("✅ Data processed successfully!")
-
-        # Step 2: Build vector store if needed
-        if not os.path.exists(persist_dir):
-            st.info("🏗️ Building vector database...")
-            vector_builder = VectorStoreBuilder(
-                csv_path=processed_csv, persist_directory=persist_dir
-            )
-            # Fix 4: Use correct method name
-            vector_builder.build_and_save_vectorstore()
-            st.success("✅ Vector database built successfully!")
-
+        st.info("🏗️ Building anime knowledge base...")
+        with st.spinner("Setting up the recommendation system..."):
+            build_main()  # This runs the entire build pipeline
+        st.success("✅ Pipeline built successfully!")
         return True
 
     except Exception as e:
         st.error(f"❌ Error building pipeline: {str(e)}")
+        import traceback
+
+        st.error(f"Traceback: {traceback.format_exc()}")
         return False
 
 
@@ -74,22 +50,38 @@ def init_pipeline():
         persist_dir = "chroma_db"
         csv_path = "data/processed_anime_data.csv"
 
-        if not os.path.exists(persist_dir) or not os.path.exists(csv_path):
+        # Check if pipeline components exist
+        vector_store_exists = (
+            os.path.exists(persist_dir)
+            and os.path.isdir(persist_dir)
+            and len(os.listdir(persist_dir)) > 0
+        )
+
+        csv_exists = os.path.exists(csv_path)
+
+        # If either doesn't exist, run the build pipeline
+        if not vector_store_exists or not csv_exists:
             st.info(
                 "🔧 Setting up the anime database for the first time... This may take a few minutes."
             )
 
-            # Build the pipeline automatically
-            with st.spinner("🏗️ Building anime knowledge base..."):
-                success = build_pipeline_if_needed()
-                if not success:
-                    return None
+            success = run_build_pipeline()
+            if not success:
+                return None
 
-                time.sleep(1)  # Let user see the success message
+            time.sleep(1)  # Let user see the success message
 
-        return AnimeRecommendationPipeline()
+        # ONLY import the pipeline AFTER everything is built
+        from pipeline.pipeline import AnimeRecommendationPipeline
+
+        # Initialize and return the pipeline
+        return AnimeRecommendationPipeline(persist_dir=persist_dir)
+
     except Exception as e:
         st.error(f"Failed to initialize pipeline: {e}")
+        import traceback
+
+        st.error(f"Full traceback: {traceback.format_exc()}")
         return None
 
 
