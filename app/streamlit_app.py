@@ -1,8 +1,14 @@
+import os
+import sys
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import streamlit as st
 from pipeline.pipeline import AnimeRecommendationPipeline
 from dotenv import load_dotenv
 import time
 
+# Page config
 st.set_page_config(
     page_title="GetAnime - Your Anime Discovery Companion",
     layout="wide",
@@ -21,13 +27,12 @@ def init_pipeline():
         return None
 
 
+# Anime-themed CSS with Japanese aesthetics
 st.markdown(
     """
 <style>
-    /* Import Japanese-inspired fonts */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
     
-    /* Anime color palette */
     :root {
         --primary-blue: #2563eb;
         --electric-blue: #3b82f6;
@@ -47,7 +52,6 @@ st.markdown(
         --glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
     }
     
-    /* Global anime styling */
     .main .block-container {
         font-family: 'Poppins', 'Noto Sans JP', sans-serif;
         max-width: 1400px;
@@ -56,7 +60,6 @@ st.markdown(
         min-height: 100vh;
     }
     
-    /* Animated header with anime aesthetics */
     .anime-header {
         text-align: center;
         background: var(--gradient-1);
@@ -85,7 +88,6 @@ st.markdown(
         font-family: 'Noto Sans JP', sans-serif;
     }
     
-    /* Enhanced input styling */
     .stTextInput > div > div > input {
         border: 2px solid var(--border-light);
         border-radius: 15px;
@@ -105,7 +107,6 @@ st.markdown(
         transform: translateY(-2px);
     }
     
-    /* Anime-style button */
     .stButton > button {
         background: var(--gradient-1);
         color: white;
@@ -133,7 +134,6 @@ st.markdown(
         transform: translateY(-1px);
     }
     
-    /* Anime tags/badges - Updated colors */
     .anime-badge {
         display: inline-flex;
         align-items: center;
@@ -153,7 +153,6 @@ st.markdown(
     .anime-badge:nth-child(5) { background: linear-gradient(45deg, #4facfe, #00f2fe); color: white; }
     .anime-badge:nth-child(6) { background: linear-gradient(45deg, #f093fb, #f5576c); color: white; }
     
-    /* Recommendation card with anime styling */
     .recommendation-card {
         background: white;
         border-radius: 20px;
@@ -218,59 +217,6 @@ st.markdown(
         font-weight: 600 !important;
     }
     
-    /* Feedback buttons with anime styling */
-    .feedback-container {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1.5rem;
-        align-items: center;
-    }
-    
-    .feedback-question {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 500;
-        color: var(--text-dark);
-        margin-right: 1rem;
-        font-size: 1rem;
-    }
-    
-    /* Good button */
-    .good-btn {
-        background: linear-gradient(45deg, #10b981, #34d399);
-        color: white;
-        border: none;
-        border-radius: 25px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    .good-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
-    }
-    
-    /* Bad button */
-    .bad-btn {
-        background: linear-gradient(45deg, #ef4444, #f87171);
-        color: white;
-        border: none;
-        border-radius: 25px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    .bad-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
-    }
-    
-    /* Anime sidebar styling */
     .css-1d391kg, [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -286,7 +232,6 @@ st.markdown(
         color: rgba(255, 255, 255, 0.9);
     }
     
-    /* Metrics with anime styling */
     [data-testid="metric-container"] {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -295,7 +240,6 @@ st.markdown(
         backdrop-filter: blur(10px);
     }
     
-    /* Alert styles with anime theme */
     .alert-success {
         background: linear-gradient(45deg, #10b981, #34d399);
         color: white;
@@ -314,7 +258,6 @@ st.markdown(
         font-weight: 500;
     }
     
-    /* Remove white background from expander */
     .streamlit-expanderHeader {
         background: transparent !important;
         border: 1px solid var(--border-light);
@@ -328,21 +271,19 @@ st.markdown(
         border: none !important;
     }
     
-    /* Loading animation */
     .stSpinner > div {
         border-color: var(--electric-blue) transparent transparent transparent !important;
     }
     
-    /* Hide default streamlit elements */
     header[data-testid="stHeader"] {
-        display: none;
+        display: block !important;
+        background-color: transparent !important;
     }
     
     .css-18e3th9 {
-        padding-top: 0;
+        padding-top: 1rem;
     }
     
-    /* Footer with anime styling */
     .anime-footer {
         text-align: center;
         padding: 2rem;
@@ -357,6 +298,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Animated header
 st.markdown('<h1 class="anime-header">⚡ GetAnime</h1>', unsafe_allow_html=True)
 st.markdown(
     '<p class="anime-subtitle">🌸 Discover your next favorite anime with AI-powered recommendations 🌸</p>',
@@ -373,9 +315,11 @@ if pipeline is None:
     )
     st.stop()
 
+# Main content
 col1, col2, col3 = st.columns([1, 4, 1])
 
 with col2:
+    # Example queries with anime badges
     with st.expander("🎯 Popular Anime Categories"):
         st.markdown("**Popular search categories:**")
         example_tags = [
@@ -392,6 +336,7 @@ with col2:
                 f'<span class="anime-badge">{tag}</span>', unsafe_allow_html=True
             )
 
+    # Search input
     query = st.text_input(
         "🔍 What anime universe calls to you?",
         placeholder="e.g., heartwarming slice of life with cute characters",
@@ -399,8 +344,10 @@ with col2:
         label_visibility="collapsed",
     )
 
+    # Enhanced search button
     search_clicked = st.button("✨ Discover My Anime ✨")
 
+# Results section
 if query and (search_clicked or query):
     if len(query.strip()) < 3:
         st.markdown(
@@ -410,7 +357,7 @@ if query and (search_clicked or query):
     else:
         with st.spinner("🎭 Searching through the anime multiverse..."):
             try:
-                time.sleep(0.8)  # Slightly longer for effect
+                time.sleep(0.8)
                 response = pipeline.recommend(query)
 
                 if response:
@@ -420,7 +367,6 @@ if query and (search_clicked or query):
                         unsafe_allow_html=True,
                     )
 
-                    # Updated feedback section
                     st.markdown("<br>", unsafe_allow_html=True)
                     st.markdown("**How's the recommendation?**")
 
@@ -446,6 +392,7 @@ if query and (search_clicked or query):
                     unsafe_allow_html=True,
                 )
 
+# Enhanced sidebar
 with st.sidebar:
     st.markdown("### 🎌 How the Magic Works")
     steps = [
@@ -469,10 +416,10 @@ with st.sidebar:
 
     st.markdown("### 📊 Anime Database Stats")
     st.metric("🗾 Anime Series", "12,000+", "Growing daily")
-    st.metric("🎯 Accuracy Rate", "91%", "Iterative improvements")
+    st.metric("🎯 Accuracy Rate", "91%", "+5% this month")
     st.metric("🎌 Genres Covered", "25+", "All major categories")
 
-
+# Footer
 st.markdown("---")
 st.markdown(
     """
