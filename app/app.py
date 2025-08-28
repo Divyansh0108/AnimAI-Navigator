@@ -1,12 +1,17 @@
 import streamlit as st
-from dotenv import load_dotenv
-import time
 import sys
 import os
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the project root directory to Python path FIRST
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
+# Now import everything else
+from dotenv import load_dotenv
+import time
+
+# Import the pipeline AFTER path modification
 from pipeline.pipeline import AnimeRecommendationPipeline
 
 st.set_page_config(
