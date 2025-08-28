@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: getanime-app
+  labels:
+    app: getanime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: getanime
+  template:
+    metadata:
+      labels:
+        app: getanime
+    spec:
+      containers:
+      - name: getanime-container
+        image: getanime-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8501
+        envFrom:
+          - secretRef:
+              name: getanime-secrets 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: getanime-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: getanime
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8501

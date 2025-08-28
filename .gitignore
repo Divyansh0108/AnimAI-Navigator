@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+.env
+
+Anime_Recommender.egg-info/
+logs/ 
+
 # Distribution / packaging
 .Python
 build/
