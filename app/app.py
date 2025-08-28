@@ -13,7 +13,6 @@ import time
 
 # Import the pipeline AFTER path modification
 from pipeline.pipeline import AnimeRecommendationPipeline
-from pipeline.build_pipeline import build_recommendation_pipeline
 
 st.set_page_config(
     page_title="GetAnime - Your Anime Discovery Companion",
@@ -22,6 +21,46 @@ st.set_page_config(
 )
 
 load_dotenv()
+
+
+def build_pipeline_if_needed():
+    """Build the pipeline if vector store doesn't exist"""
+    try:
+        # Import here to avoid issues if the module has problems
+        from src.data_loader import DataLoader
+        from src.vector_store import VectorStoreBuilder
+
+        # Check if we have the source data
+        source_csv = "data/anime_with_synopsis.csv"
+        processed_csv = "data/processed_anime_data.csv"
+        persist_dir = "chroma_db"
+
+        if not os.path.exists(source_csv):
+            st.error(f"❌ Source data file not found: {source_csv}")
+            return False
+
+        # Step 1: Load and process data if needed
+        if not os.path.exists(processed_csv):
+            st.info("📊 Processing anime data...")
+            data_loader = DataLoader(source_csv)
+            processed_data = data_loader.load_and_process()
+            processed_data.to_csv(processed_csv, index=False)
+            st.success("✅ Data processed successfully!")
+
+        # Step 2: Build vector store if needed
+        if not os.path.exists(persist_dir):
+            st.info("🏗️ Building vector database...")
+            vector_builder = VectorStoreBuilder(
+                csv_path=processed_csv, persist_directory=persist_dir
+            )
+            vector_store = vector_builder.build_vector_store()
+            st.success("✅ Vector database built successfully!")
+
+        return True
+
+    except Exception as e:
+        st.error(f"❌ Error building pipeline: {str(e)}")
+        return False
 
 
 @st.cache_resource
@@ -38,13 +77,11 @@ def init_pipeline():
 
             # Build the pipeline automatically
             with st.spinner("🏗️ Building anime knowledge base..."):
-                try:
-                    build_recommendation_pipeline()
-                    st.success("✅ Anime database ready!")
-                    time.sleep(2)  # Let user see the success message
-                except Exception as e:
-                    st.error(f"Failed to build pipeline: {e}")
+                success = build_pipeline_if_needed()
+                if not success:
                     return None
+
+                time.sleep(1)  # Let user see the success message
 
         return AnimeRecommendationPipeline()
     except Exception as e:
@@ -408,7 +445,7 @@ pipeline = init_pipeline()
 
 if pipeline is None:
     st.markdown(
-        '<div class="alert-error">❌ Unable to start the recommendation system. Please check your configuration.</div>',
+        '<div class="alert-error">❌ Unable to start the recommendation system. Please check your configuration and ensure you have a valid GROQ API key.</div>',
         unsafe_allow_html=True,
     )
     st.stop()
