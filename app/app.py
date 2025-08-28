@@ -13,6 +13,7 @@ import time
 
 # Import the pipeline AFTER path modification
 from pipeline.pipeline import AnimeRecommendationPipeline
+from pipeline.build_pipeline import build_recommendation_pipeline
 
 st.set_page_config(
     page_title="GetAnime - Your Anime Discovery Companion",
@@ -26,6 +27,25 @@ load_dotenv()
 @st.cache_resource
 def init_pipeline():
     try:
+        # Check if vector store exists
+        persist_dir = "chroma_db"
+        csv_path = "data/processed_anime_data.csv"
+
+        if not os.path.exists(persist_dir) or not os.path.exists(csv_path):
+            st.info(
+                "🔧 Setting up the anime database for the first time... This may take a few minutes."
+            )
+
+            # Build the pipeline automatically
+            with st.spinner("🏗️ Building anime knowledge base..."):
+                try:
+                    build_recommendation_pipeline()
+                    st.success("✅ Anime database ready!")
+                    time.sleep(2)  # Let user see the success message
+                except Exception as e:
+                    st.error(f"Failed to build pipeline: {e}")
+                    return None
+
         return AnimeRecommendationPipeline()
     except Exception as e:
         st.error(f"Failed to initialize pipeline: {e}")
@@ -325,6 +345,15 @@ st.markdown(
         font-weight: 500;
     }
     
+    .alert-info {
+        background: linear-gradient(45deg, #3b82f6, #60a5fa);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        padding: 1rem;
+        font-weight: 500;
+    }
+    
     /* Remove white background from expander */
     .streamlit-expanderHeader {
         background: transparent !important;
@@ -482,7 +511,6 @@ with st.sidebar:
     st.metric("🗾 Anime Series", "12,000+", "Growing daily")
     st.metric("🎯 Accuracy Rate", "91%", "Iterative improvements")
     st.metric("🎌 Genres Covered", "25+", "All major categories")
-
 
 st.markdown("---")
 st.markdown(
